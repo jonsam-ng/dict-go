@@ -8,6 +8,16 @@ const TIME_LIMIT = 15;
 
 type HintType = 'definition' | 'example' | 'synonym';
 
+const speakWord = (word: string) => {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    speechSynthesis.speak(utterance);
+  }
+};
+
 export default function ReverseGame() {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,6 +29,7 @@ export default function ReverseGame() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [hintType, setHintType] = useState<HintType>('definition');
   const [gameState, setGameState] = useState<'start' | 'playing' | 'result'>('start');
+  const [answeredWords, setAnsweredWords] = useState<{ word: string; correct: boolean }[]>([]);
 
   useEffect(() => {
     const shuffled = [...advancedWords].sort(() => Math.random() - 0.5);
@@ -42,6 +53,7 @@ export default function ReverseGame() {
     setWords(shuffled.slice(0, TOTAL_WORDS));
     setCurrentIndex(0);
     setCorrectCount(0);
+    setAnsweredWords([]);
     setTimeLeft(TIME_LIMIT);
     setGameState('playing');
     setHintType(getRandomHintType());
@@ -75,6 +87,7 @@ export default function ReverseGame() {
   };
 
   const handleTimeout = () => {
+    setAnsweredWords(prev => [...prev, { word: words[currentIndex].word, correct: false }]);
     nextWord();
   };
 
@@ -88,6 +101,7 @@ export default function ReverseGame() {
 
     setIsCorrect(correct);
     setShowResult(true);
+    setAnsweredWords(prev => [...prev, { word: words[currentIndex].word, correct }]);
 
     setTimeout(() => {
       if (correct) {
@@ -96,8 +110,13 @@ export default function ReverseGame() {
       setShowResult(false);
       setUserAnswer('');
       nextWord();
-    }, 800);
+    }, 1000);
   }, [userAnswer, words, currentIndex]);
+
+  const handleSkip = useCallback(() => {
+    setAnsweredWords(prev => [...prev, { word: words[currentIndex].word, correct: false }]);
+    nextWord();
+  }, [words, currentIndex]);
 
   const nextWord = () => {
     const nextIndex = currentIndex + 1;
@@ -115,26 +134,28 @@ export default function ReverseGame() {
   if (gameState === 'start') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">⚡</div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">单词逆向速答</h1>
-          <div className="text-gold-light/80 text-lg mb-8 space-y-2">
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">⚡</div>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">单词逆向速答</h1>
+          <div className="text-gold-light/80 text-lg mb-8 space-y-3">
             <p>根据提示快速说出对应的英文单词</p>
-            <p>{TOTAL_WORDS} 个单词，{TIME_LIMIT} 秒/题</p>
+            <p>20个单词，15秒/题</p>
             <p>三种提示方式随机出现：释义、例句、同义词</p>
           </div>
-          <button
-            onClick={startGame}
-            className="px-12 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-xl rounded-xl hover:shadow-gold-glow transition-all duration-300 hover:scale-105"
-          >
-            开始速答
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 px-8 py-3 text-gold-light hover:text-gold transition-colors"
-          >
-            返回首页
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={startGame}
+              className="w-full px-12 py-4 btn-primary text-xl rounded-xl"
+            >
+              开始速答
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-8 py-3 btn-secondary rounded-xl"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -143,11 +164,11 @@ export default function ReverseGame() {
   if (gameState === 'result') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">
             {correctCount >= TOTAL_WORDS * 0.8 ? '🏆' : correctCount >= TOTAL_WORDS * 0.5 ? '👍' : '💪'}
           </div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">挑战完成！</h1>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">挑战完成！</h1>
           <div className="text-gold-light/90 text-xl mb-8 space-y-3">
             <p>正确：{correctCount}/{TOTAL_WORDS}</p>
             <p>正确率：{Math.round((correctCount / TOTAL_WORDS) * 100)}%</p>
@@ -155,13 +176,13 @@ export default function ReverseGame() {
           <div className="space-x-4">
             <button
               onClick={startGame}
-              className="px-10 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-lg rounded-xl hover:shadow-gold-glow transition-all duration-300"
+              className="px-10 py-4 btn-primary text-lg rounded-xl"
             >
               再来一次
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-10 py-4 bg-primary-light text-gold font-bold text-lg rounded-xl hover:bg-primary transition-all duration-300"
+              className="px-10 py-4 btn-secondary rounded-xl"
             >
               返回首页
             </button>
@@ -173,21 +194,21 @@ export default function ReverseGame() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="text-gold-light hover:text-gold transition-colors"
+              className="px-4 py-2 btn-secondary rounded-lg text-sm"
             >
               ← 返回
             </button>
-            <div className="text-2xl font-serif text-gold">
+            <div className="text-2xl md:text-3xl font-serif text-gold font-bold">
               第 {currentIndex + 1}/{TOTAL_WORDS} 题
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-400' : 'text-gold'}`}>
+            <div className={`text-2xl md:text-3xl font-bold ${timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-gold'}`}>
               ⏱ {timeLeft}s
             </div>
             <div className="text-xl text-gold-light">
@@ -197,68 +218,89 @@ export default function ReverseGame() {
         </div>
 
         {currentWord && (
-          <div className="bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-8 md:p-12">
-            <div className="text-center mb-8">
-              <div className="text-sm text-gold-light/60 mb-2 uppercase tracking-widest">
+          <div className="vintage-card rounded-3xl p-8 md:p-12">
+            <div className="text-center mb-10">
+              <div className="text-sm text-gold-light/60 mb-4 uppercase tracking-widest">
                 {getHintLabel(hintType)}
               </div>
-              <div className="text-3xl md:text-4xl font-serif gold-gradient leading-relaxed">
+              <div className="text-4xl md:text-5xl font-serif gold-gradient leading-relaxed mb-8">
                 {getHintText(currentWord, hintType)}
               </div>
             </div>
 
-            <form onSubmit={handleAnswer} className="max-w-xl mx-auto">
-              <input
-                type="text"
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                placeholder="输入英文单词..."
-                className={`w-full px-6 py-4 bg-primary/60 border-2 rounded-xl text-xl text-gold-light placeholder-gold-light/40 focus:outline-none transition-all ${
-                  showResult
-                    ? isCorrect
-                      ? 'border-emerald-400 bg-emerald-500/20'
-                      : 'border-red-400 bg-red-500/20'
-                    : 'border-gold/50 focus:border-gold focus:shadow-gold-glow'
-                }`}
-                autoFocus
-              />
+            <form onSubmit={handleAnswer} className="max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <input
+                  type="text"
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="输入英文单词..."
+                  className={`flex-1 px-8 py-5 bg-primary/60 border-2 rounded-xl text-xl md:text-2xl text-gold-light placeholder-gold-light/40 focus:outline-none transition-all font-sans ${
+                    showResult
+                      ? isCorrect
+                        ? 'border-emerald-400 bg-emerald-500/20'
+                        : 'border-red-400 bg-red-500/20'
+                      : 'border-gold/50 focus:border-gold focus:shadow-gold-glow'
+                  }`}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => speakWord(currentWord.word)}
+                  className="p-4 btn-secondary rounded-xl"
+                >
+                  🔊
+                </button>
+              </div>
+
               {showResult && (
-                <div className={`mt-4 text-center ${isCorrect ? 'text-emerald-300' : 'text-red-300'}`}>
+                <div className={`text-center mb-8 text-xl ${isCorrect ? 'text-emerald-300' : 'text-red-300'}`}>
                   {isCorrect ? '正确！' : `答案: ${currentWord.word}`}
                 </div>
               )}
-              <div className="mt-6 flex justify-center">
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   type="submit"
                   disabled={showResult}
-                  className="px-8 py-3 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold rounded-xl hover:shadow-gold-glow transition-all disabled:opacity-50"
+                  className="flex-1 px-8 py-4 btn-primary text-lg rounded-xl"
                 >
                   确认
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  disabled={showResult}
+                  className="px-8 py-4 btn-secondary text-lg rounded-xl"
+                >
+                  跳过 →
                 </button>
               </div>
             </form>
 
             {hintType !== 'definition' && (
-              <div className="mt-8 text-center text-gold-light/50 text-sm">
+              <div className="mt-10 text-center text-gold-light/50 text-lg">
                 💡 {currentWord.definition}
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-8 flex justify-center gap-2">
+        <div className="mt-10 flex justify-center gap-2 flex-wrap">
           {Array.from({ length: TOTAL_WORDS }).map((_, i) => {
             let status = 'pending';
-            if (i < currentIndex) status = i < correctCount ? 'correct' : 'wrong';
+            if (i < currentIndex) {
+              status = answeredWords[i]?.correct ? 'correct' : 'wrong';
+            }
             if (i === currentIndex) status = 'active';
-            
+
             return (
               <div
                 key={i}
-                className={`w-3 h-3 rounded-full transition-all ${
+                className={`w-4 h-4 md:w-5 md:h-5 rounded-full transition-all duration-300 ${
                   status === 'correct' ? 'bg-emerald-400' :
                   status === 'wrong' ? 'bg-red-400' :
-                  status === 'active' ? 'bg-gold scale-125' : 'bg-gold/20'
+                  status === 'active' ? 'bg-gold scale-125 shadow-gold-glow' : 'bg-gold/20'
                 }`}
               />
             );

@@ -6,6 +6,16 @@ import { ConfusablePair } from '../types';
 const TOTAL_PAIRS = 10;
 const TIME_LIMIT = 20;
 
+const speakWord = (word: string) => {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    speechSynthesis.speak(utterance);
+  }
+};
+
 export default function TrapGame() {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -63,6 +73,14 @@ export default function TrapGame() {
     nextQuestion();
   };
 
+  const handleSkip = useCallback(() => {
+    if (pairs[currentIndex]) {
+      setWrongPairs(wp => [...wp, pairs[currentIndex]]);
+    }
+    setConsecutiveCorrect(0);
+    nextQuestion();
+  }, [pairs, currentIndex]);
+
   const handleSelect = useCallback((word: string) => {
     setSelectedWord(word);
     const pair = pairs[currentIndex];
@@ -118,26 +136,28 @@ export default function TrapGame() {
   if (gameState === 'start') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">🎯</div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">词义陷阱大考验</h1>
-          <div className="text-gold-light/80 text-lg mb-8 space-y-2">
-            <p>辨析 {TOTAL_PAIRS} 组易混高级词</p>
-            <p>限时 {TIME_LIMIT} 秒/组，连续答对获得连击加分</p>
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">🎯</div>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">词义陷阱大考验</h1>
+          <div className="text-gold-light/80 text-lg mb-8 space-y-3">
+            <p>辨析 <span className="text-gold font-bold">10</span> 组易混高级词</p>
+            <p>限时 <span className="text-gold font-bold">20</span> 秒/组，连续答对获得连击加分</p>
             <p>答错的单词将进入错题回顾</p>
           </div>
-          <button
-            onClick={startGame}
-            className="px-12 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-xl rounded-xl hover:shadow-gold-glow transition-all duration-300 hover:scale-105"
-          >
-            开始挑战
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 px-8 py-3 text-gold-light hover:text-gold transition-colors"
-          >
-            返回首页
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={startGame}
+              className="w-full px-12 py-4 btn-primary text-xl rounded-xl"
+            >
+              开始挑战
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-8 py-3 btn-secondary rounded-xl"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -146,22 +166,22 @@ export default function TrapGame() {
   if (gameState === 'review') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">📝</div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">错题回顾</h1>
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">📝</div>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">错题回顾</h1>
           <p className="text-gold-light/80 text-lg mb-8">
-            你有 {wrongPairs.length} 组单词需要复习
+            你有 <span className="text-gold font-bold">{wrongPairs.length}</span> 组单词需要复习
           </p>
           <div className="space-x-4">
             <button
               onClick={startReview}
-              className="px-10 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-lg rounded-xl hover:shadow-gold-glow transition-all duration-300"
+              className="px-10 py-4 btn-primary text-lg rounded-xl"
             >
               复习错题
             </button>
             <button
               onClick={() => setGameState('result')}
-              className="px-10 py-4 bg-primary-light text-gold font-bold text-lg rounded-xl hover:bg-primary transition-all duration-300"
+              className="px-10 py-4 btn-secondary rounded-xl"
             >
               查看结果
             </button>
@@ -174,23 +194,23 @@ export default function TrapGame() {
   if (gameState === 'result') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">🏆</div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">挑战完成！</h1>
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">🏆</div>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">挑战完成！</h1>
           <div className="text-gold-light/90 text-xl mb-8 space-y-3">
-            <p>得分：{score}</p>
-            <p>正确率：{Math.round(((TOTAL_PAIRS - wrongPairs.length) / TOTAL_PAIRS) * 100)}%</p>
+            <p>得分：<span className="text-gold font-bold">{score}</span></p>
+            <p>正确率：<span className="text-gold font-bold">{Math.round(((TOTAL_PAIRS - wrongPairs.length) / TOTAL_PAIRS) * 100)}</span>%</p>
           </div>
           <div className="space-x-4">
             <button
               onClick={startGame}
-              className="px-10 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-lg rounded-xl hover:shadow-gold-glow transition-all duration-300"
+              className="px-10 py-4 btn-primary text-lg rounded-xl"
             >
               再来一次
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-10 py-4 bg-primary-light text-gold font-bold text-lg rounded-xl hover:bg-primary transition-all duration-300"
+              className="px-10 py-4 btn-secondary rounded-xl"
             >
               返回首页
             </button>
@@ -202,25 +222,25 @@ export default function TrapGame() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="text-gold-light hover:text-gold transition-colors"
+              className="px-4 py-2 btn-secondary rounded-lg text-sm"
             >
               ← 返回
             </button>
-            <div className="text-2xl font-serif text-gold">
+            <div className="text-2xl md:text-3xl font-serif text-gold font-bold">
               第 {currentIndex + 1}/{pairs.length} 组
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-400' : 'text-gold'}`}>
+            <div className={`text-2xl md:text-3xl font-bold ${timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-gold'}`}>
               ⏱ {timeLeft}s
             </div>
             <div className="text-xl text-gold-light">
-              得分: {score}
+              得分: <span className="text-gold">{score}</span>
             </div>
             {consecutiveCorrect >= 3 && (
               <div className="text-xl text-yellow-400 animate-pulse">
@@ -231,30 +251,41 @@ export default function TrapGame() {
         </div>
 
         {currentPair && (
-          <div className="bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-8 md:p-12">
-            <div className="text-center mb-8">
+          <div className="vintage-card rounded-3xl p-8 md:p-12">
+            <div className="text-center mb-10">
               <div className="text-3xl md:text-4xl font-serif text-gold-light mb-4">
                 这个释义对应哪个单词？
               </div>
-              <div className="text-4xl md:text-5xl font-bold gold-gradient">
+              <div className="text-4xl md:text-5xl font-bold gold-gradient leading-relaxed">
                 {currentDefinition}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
               <button
                 onClick={() => !showResult && handleSelect(currentPair.word1.word)}
                 disabled={showResult}
-                className={`p-8 rounded-2xl text-2xl font-serif font-bold transition-all duration-300 ${
+                className={`p-8 rounded-2xl text-2xl font-serif font-bold transition-all duration-300 border-2 ${
                   selectedWord === currentPair.word1.word
                     ? showResult
                       ? (currentDefinition === currentPair.word1.definition ? 'bg-emerald-500/30 border-emerald-400' : 'bg-red-500/30 border-red-400')
                       : 'bg-gold/20 border-gold'
                     : 'bg-primary/40 border-gold/30 hover:bg-gold/10'
-                } border-2`}
+                }`}
               >
-                {currentPair.word1.word}
-                <div className="text-sm font-normal text-gold-light/60 mt-2">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <span className="word-display">{currentPair.word1.word}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakWord(currentPair.word1.word);
+                    }}
+                    className="p-2 text-gold hover:text-gold-light transition-colors"
+                  >
+                    🔊
+                  </button>
+                </div>
+                <div className="text-sm font-normal text-gold-light/60">
                   {currentPair.word1.definition}
                 </div>
               </button>
@@ -262,23 +293,51 @@ export default function TrapGame() {
               <button
                 onClick={() => !showResult && handleSelect(currentPair.word2.word)}
                 disabled={showResult}
-                className={`p-8 rounded-2xl text-2xl font-serif font-bold transition-all duration-300 ${
+                className={`p-8 rounded-2xl text-2xl font-serif font-bold transition-all duration-300 border-2 ${
                   selectedWord === currentPair.word2.word
                     ? showResult
                       ? (currentDefinition === currentPair.word2.definition ? 'bg-emerald-500/30 border-emerald-400' : 'bg-red-500/30 border-red-400')
                       : 'bg-gold/20 border-gold'
                     : 'bg-primary/40 border-gold/30 hover:bg-gold/10'
-                } border-2`}
+                }`}
               >
-                {currentPair.word2.word}
-                <div className="text-sm font-normal text-gold-light/60 mt-2">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <span className="word-display">{currentPair.word2.word}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakWord(currentPair.word2.word);
+                    }}
+                    className="p-2 text-gold hover:text-gold-light transition-colors"
+                  >
+                    🔊
+                  </button>
+                </div>
+                <div className="text-sm font-normal text-gold-light/60">
                   {currentPair.word2.definition}
                 </div>
               </button>
             </div>
 
-            <div className="mt-8 text-center text-gold-light/70">
-              <p>💡 区别：{currentPair.difference}</p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleSkip}
+                disabled={showResult}
+                className="px-8 py-3 btn-secondary text-lg rounded-xl"
+              >
+                跳过 →
+              </button>
+            </div>
+
+            <div className="mt-10 text-center text-gold-light/70">
+              <div className="p-4 bg-primary/30 rounded-xl max-w-2xl mx-auto">
+                <div className="text-gold font-semibold mb-2 text-sm uppercase tracking-wide">
+                  💡 区别提示
+                </div>
+                <div className="text-lg">
+                  {currentPair.difference}
+                </div>
+              </div>
             </div>
           </div>
         )}

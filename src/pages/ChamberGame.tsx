@@ -6,6 +6,16 @@ import { Word } from '../types';
 const TOTAL_WORDS = 15;
 const TIME_LIMIT = 30;
 
+const speakWord = (word: string) => {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    speechSynthesis.speak(utterance);
+  }
+};
+
 export default function ChamberGame() {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -67,6 +77,17 @@ export default function ChamberGame() {
     }, 1000);
   }, [userAnswer, words, currentIndex]);
 
+  const handleSkip = useCallback(() => {
+    setWrongCount(w => w + 1);
+    if (wrongCount + 1 >= 3) {
+      setGameState('result');
+    } else {
+      nextWord();
+    }
+    setTimeLeft(TIME_LIMIT);
+    setUserAnswer('');
+  }, [wrongCount]);
+
   const handleWrong = () => {
     const newWrongCount = wrongCount + 1;
     setWrongCount(newWrongCount);
@@ -99,26 +120,28 @@ export default function ChamberGame() {
   if (gameState === 'start') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">🔐</div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">盲词记忆密室</h1>
-          <div className="text-gold-light/80 text-lg mb-8 space-y-2">
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">🔐</div>
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">盲词记忆密室</h1>
+          <div className="text-gold-light/80 text-lg mb-8 space-y-3">
             <p>第1轮：根据中文释义默写单词</p>
             <p>第2轮：根据词根词缀推导单词</p>
             <p>累计错3个挑战失败</p>
           </div>
-          <button
-            onClick={startGame}
-            className="px-12 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-xl rounded-xl hover:shadow-gold-glow transition-all duration-300 hover:scale-105"
-          >
-            进入密室
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 px-8 py-3 text-gold-light hover:text-gold transition-colors"
-          >
-            返回首页
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={startGame}
+              className="w-full px-12 py-4 btn-primary text-xl rounded-xl"
+            >
+              进入密室
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-8 py-3 btn-secondary rounded-xl"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -127,11 +150,11 @@ export default function ChamberGame() {
   if (gameState === 'result') {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="max-w-2xl w-full bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-10 text-center">
-          <div className="text-7xl mb-6">
+        <div className="max-w-2xl w-full vintage-card rounded-3xl p-10 text-center">
+          <div className="text-8xl mb-6">
             {wrongCount >= 3 ? '💀' : '🎉'}
           </div>
-          <h1 className="text-4xl font-serif font-bold gold-gradient mb-6">
+          <h1 className="text-5xl font-serif font-bold gold-gradient mb-6">
             {wrongCount >= 3 ? '挑战失败' : '密室逃脱成功！'}
           </h1>
           <div className="text-gold-light/90 text-xl mb-8 space-y-3">
@@ -142,13 +165,13 @@ export default function ChamberGame() {
           <div className="space-x-4">
             <button
               onClick={startGame}
-              className="px-10 py-4 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold text-lg rounded-xl hover:shadow-gold-glow transition-all duration-300"
+              className="px-10 py-4 btn-primary text-lg rounded-xl"
             >
               再次挑战
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-10 py-4 bg-primary-light text-gold font-bold text-lg rounded-xl hover:bg-primary transition-all duration-300"
+              className="px-10 py-4 btn-secondary rounded-xl"
             >
               返回首页
             </button>
@@ -160,28 +183,28 @@ export default function ChamberGame() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="text-gold-light hover:text-gold transition-colors"
+              className="px-4 py-2 btn-secondary rounded-lg text-sm"
             >
               ← 返回
             </button>
-            <div className="text-2xl font-serif text-gold">
+            <div className="text-2xl md:text-3xl font-serif text-gold font-bold">
               第 {round} 轮 - 第 {currentIndex + 1}/{words.length} 词
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-red-400' : 'text-gold'}`}>
+            <div className={`text-2xl md:text-3xl font-bold ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-gold'}`}>
               ⏱ {timeLeft}s
             </div>
             <div className="flex gap-1">
               {[0, 1, 2].map(i => (
                 <div
                   key={i}
-                  className={`w-4 h-4 rounded-full ${i < wrongCount ? 'bg-red-500' : 'bg-gold/20'}`}
+                  className={`w-5 h-5 rounded-full ${i < wrongCount ? 'bg-red-500' : 'bg-gold/20'}`}
                 />
               ))}
             </div>
@@ -189,66 +212,85 @@ export default function ChamberGame() {
         </div>
 
         {currentWord && (
-          <div className="bg-primary-light/40 backdrop-blur-sm vintage-border rounded-3xl p-8 md:p-12">
-            <div className="text-center mb-8">
-              <div className="text-lg text-gold-light/60 mb-4">
+          <div className="vintage-card rounded-3xl p-8 md:p-12">
+            <div className="text-center mb-10">
+              <div className="text-lg text-gold-light/60 mb-6">
                 {round === 1 ? '根据中文释义默写单词' : '根据词根词缀推导单词'}
               </div>
-              
+
               {round === 1 ? (
-                <div className="text-4xl md:text-5xl font-bold gold-gradient mb-4">
+                <div className="text-4xl md:text-5xl font-bold gold-gradient mb-8 leading-relaxed">
                   {currentWord.definition}
                 </div>
               ) : (
-                <div className="text-3xl md:text-4xl font-bold gold-gradient mb-4">
+                <div className="text-4xl md:text-5xl font-bold gold-gradient mb-8 leading-relaxed">
                   {currentWord.root || '词根/词缀'}
                 </div>
               )}
 
-              <div className="text-gold-light/60 mt-4">
+              <div className="text-gold-light/60 mb-8">
                 {round === 1 && (
-                  <div>搭配: {currentWord.collocations[0]}</div>
+                  <div className="text-xl">搭配: {currentWord.collocations[0]}</div>
                 )}
                 {round === 2 && (
-                  <div>释义: {currentWord.definition}</div>
+                  <div className="text-xl">释义: {currentWord.definition}</div>
                 )}
               </div>
             </div>
 
-            <form onSubmit={handleAnswer} className="max-w-xl mx-auto">
-              <input
-                type="text"
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                placeholder="输入英文单词..."
-                className={`w-full px-6 py-4 bg-primary/60 border-2 rounded-xl text-xl text-gold-light placeholder-gold-light/40 focus:outline-none transition-all ${
-                  showResult
-                    ? isCorrect
-                      ? 'border-emerald-400 bg-emerald-500/20'
-                      : 'border-red-400 bg-red-500/20'
-                    : 'border-gold/50 focus:border-gold focus:shadow-gold-glow'
-                }`}
-                autoFocus
-              />
+            <form onSubmit={handleAnswer} className="max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <input
+                  type="text"
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="输入英文单词..."
+                  className={`flex-1 px-8 py-5 bg-primary/60 border-2 rounded-xl text-xl md:text-2xl text-gold-light placeholder-gold-light/40 focus:outline-none transition-all font-sans ${
+                    showResult
+                      ? isCorrect
+                        ? 'border-emerald-400 bg-emerald-500/20'
+                        : 'border-red-400 bg-red-500/20'
+                      : 'border-gold/50 focus:border-gold focus:shadow-gold-glow'
+                  }`}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => speakWord(currentWord.word)}
+                  className="p-4 btn-secondary rounded-xl"
+                >
+                  🔊
+                </button>
+              </div>
+
               {showResult && !isCorrect && (
-                <div className="mt-4 text-center text-red-300">
+                <div className="text-center mb-8 text-red-300 text-xl">
                   正确答案: {currentWord.word}
                 </div>
               )}
-              <div className="mt-6 flex justify-center">
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   type="submit"
                   disabled={showResult}
-                  className="px-8 py-3 bg-gradient-to-r from-gold to-gold-dark text-primary-dark font-bold rounded-xl hover:shadow-gold-glow transition-all disabled:opacity-50"
+                  className="flex-1 px-8 py-4 btn-primary text-lg rounded-xl"
                 >
                   确认
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  disabled={showResult}
+                  className="px-8 py-4 btn-secondary text-lg rounded-xl"
+                >
+                  跳过 →
                 </button>
               </div>
             </form>
 
-            <div className="mt-8 text-center text-gold-light/50 text-sm">
+            <div className="mt-10 text-center text-gold-light/50 text-sm">
               {Array.from({ length: currentWord.word.length }).map((_, i) => (
-                <span key={i} className="inline-block w-6 h-1 mx-1 bg-gold/30 rounded" />
+                <span key={i} className="inline-block w-7 h-1.5 mx-1.5 bg-gold/30 rounded" />
               ))}
             </div>
           </div>
