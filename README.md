@@ -1,57 +1,149 @@
-# React + TypeScript + Vite
+# 高阶单词闯关游戏
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个精美的单机单词学习应用，采用 React + TypeScript + Vite 构建，提供四种沉浸式的单词学习模式。
 
-Currently, two official plugins are available:
+## ✨ 功能特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🎮 四种游戏模式
 
-## Expanding the ESLint configuration
+1. **🏰 词汇阶梯爬塔** - 15层塔楼挑战，每层5个高级单词
+   - 限时40秒/层
+   - 答错1个重闯本层，答错2个退回上一层
+   - 搭配和同义词提示
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+2. **🎯 词义陷阱大考验** - 辨析易混高级词
+   - 10组易混词辨析
+   - 限时20秒/组
+   - 连击加分机制
+   - 错题回顾功能
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+3. **🔐 盲词记忆密室** - 中文释义默写
+   - 两轮闯关模式
+   - 第1轮：根据中文释义默写单词
+   - 第2轮：根据词根词缀推导单词
+   - 累计错3个挑战失败
+
+4. **⚡ 单词逆向速答** - 快速反应模式
+   - 20个单词，15秒/题
+   - 三种提示方式随机出现：释义、例句、同义词
+   - 碎片时间反复刷词
+
+### 🎨 设计特色
+
+- **奢华学术风格**：深蓝色与金色渐变配色
+- **精美视觉效果**：光晕、阴影、动画效果
+- **响应式设计**：完美适配桌面和移动端
+- **流畅交互**：悬停动画、反馈效果、过渡动画
+
+### 🔊 发音功能
+
+- 浏览器内置语音合成
+- 美式英语发音
+- 语速适中，自然清晰
+
+### ⏭️ 跳过功能
+
+- 所有模式支持跳过不会的单词
+- 正确记录跳过的单词
+- 不影响游戏进度
+
+## 🛠️ 技术栈
+
+- **前端**：React 18 + TypeScript
+- **构建工具**：Vite
+- **样式**：Tailwind CSS
+- **路由**：React Router v6
+- **字体**：Playfair Display（标题）+ Lato（正文）
+
+## 📦 安装和运行
+
+### 安装依赖
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 开发模式
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  extends: [
-    // other configs...
-    // Enable lint rules for React
-    reactX.configs['recommended-typescript'],
-    // Enable lint rules for React DOM
-    reactDom.configs.recommended,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm run dev
 ```
+
+访问 http://localhost:5173
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+### 预览生产版本
+
+```bash
+npm run preview
+```
+
+## 📁 项目结构
+
+```
+/workspace
+├── src/
+│   ├── components/       # 通用组件
+│   ├── pages/            # 页面组件
+│   │   ├── Home.tsx      # 首页
+│   │   ├── TowerGame.tsx # 词汇阶梯爬塔
+│   │   ├── TrapGame.tsx  # 词义陷阱大考验
+│   │   ├── ChamberGame.tsx # 盲词记忆密室
+│   │   └── ReverseGame.tsx # 单词逆向速答
+│   ├── data/
+│   │   └── words.ts      # 单词数据
+│   ├── types.ts          # 类型定义
+│   ├── App.tsx           # 应用入口
+│   ├── main.tsx          # React 挂载
+│   └── index.css         # 全局样式
+├── public/               # 静态资源
+├── .trae/                # 项目文档
+│   └── documents/
+│       ├── prd.md        # 产品需求文档
+│       └── arch.md       # 技术架构文档
+├── vite.config.ts        # Vite 配置
+├── tailwind.config.js    # Tailwind 配置
+├── tsconfig.json         # TypeScript 配置
+└── package.json          # 项目配置
+```
+
+## 📝 开发说明
+
+### 添加新单词
+
+编辑 `src/data/words.ts` 文件，添加新的单词条目：
+
+```typescript
+{
+  word: 'your-word',
+  definition: '中文释义',
+  collocations: ['搭配1', '搭配2'],
+  synonyms: ['同义词1', '同义词2'],
+  example: '例句',
+  root: '词根词缀',
+  level: 'cet6' // cet4 | cet6 | kaoyan | ielts
+}
+```
+
+### 自定义样式
+
+- 主色调配置在 `tailwind.config.js`
+- 全局样式在 `src/index.css`
+- 使用 Tailwind CSS 原子类进行样式开发
+
+## 📄 License
+
+MIT License
+
+## 🌟 Star History
+
+如果这个项目对你有帮助，请给个 Star ⭐
+
+## 📧 反馈与支持
+
+欢迎提交 Issue 和 Pull Request！
